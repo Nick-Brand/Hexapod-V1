@@ -264,13 +264,14 @@ void setup()
 
 void loop()
 {
+	// digitalWrite(LEDpin, LEDHdlts); for testing 
+	
 	ps2x.read_gamepad();
 
 	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 	PlyStnLStickUpDn = ps2x.Analog(PSS_LY);
 	PlyStnLStickLtRt = ps2x.Analog(PSS_LX);
-	digitalWrite(LEDpin, LEDHdlts);
 	Serial.println(PlyStnRStickUpDn);
 	
 	if(ps2x.Button(PSB_CROSS))
