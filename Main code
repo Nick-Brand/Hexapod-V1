@@ -1,0 +1,337 @@
+#include <PS2X_lib.h>  //for v1.6
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+#include <Servo.h>
+
+//SERVOMIN  650
+//SERVOMAX  2350
+// 1075 for middle min
+// 1925 for middle max
+
+PS2X ps2x;
+const int LEDpin = 13;
+int PlyStnRStickUpDn = 0;
+int PlyStnRStickLtRt = 0;
+int PlyStnLStickUpDn = 0;
+int PlyStnLStickLtRt = 0;
+volatile boolean LEDHdlts;
+int rStickUpDown;
+int rStickLeftRight;
+int lStickUpDown;
+int lStickLeftRight;
+
+
+float SERVOFREQ = 50;
+float pulseconstant;
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+void servoWrite(uint8_t n, float pulse)
+{
+	float pulsetick;
+	pulsetick = pulse / pulseconstant;
+	//Serial.println(pulsetick);
+	pwm.setPWM(n, 0, pulsetick);
+}
+void endLife()
+{
+	servoWrite(0, 1500);
+	servoWrite(1, 1500);
+	servoWrite(2, 1500);
+	servoWrite(3, 1500);
+	servoWrite(4, 1500);
+	servoWrite(5, 1500);
+	servoWrite(6, 1925);
+	servoWrite(7, 1925);
+	servoWrite(8, 1925);
+	servoWrite(9, 1925);
+	servoWrite(10, 1925);
+	servoWrite(11, 1925);
+	delay(2000);
+}
+void idleMode()
+{
+	servoWrite(0, 1500);
+	servoWrite(1, 1500);
+	servoWrite(2, 1500);
+	servoWrite(3, 1500);
+	servoWrite(4, 1500);
+	servoWrite(5, 1500);
+	servoWrite(6, 1075);
+	servoWrite(7, 1075);
+	servoWrite(8, 1075);
+	servoWrite(9, 1075);
+	servoWrite(10, 1075);
+	servoWrite(11, 1075);
+}
+void turnRight()
+{
+	servoWrite(6, 1500);
+	servoWrite(8, 1500);
+	servoWrite(10, 1500);
+	delay(125);
+
+	servoWrite(0, 1925);
+	servoWrite(1, 1500);
+	servoWrite(2, 1925);
+	servoWrite(3, 1500);
+	servoWrite(4, 1925);
+	servoWrite(5, 1500);
+
+	delay(125);
+
+	servoWrite(6, 1075);
+	servoWrite(8, 1075);
+	servoWrite(10, 1075);
+
+	delay(125);
+
+	//Next
+	ps2x.read_gamepad();
+	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
+	if(PlyStnRStickLtRt == 255){
+		servoWrite(7, 1500);
+		servoWrite(9, 1500);
+		servoWrite(11, 1500);
+		delay(125);
+	
+		servoWrite(0, 1500);
+		servoWrite(1, 1925);
+		servoWrite(2, 1500);
+		servoWrite(3, 1925);
+		servoWrite(4, 1500);
+		servoWrite(5, 1925);
+	
+		delay(125);
+	
+		servoWrite(7, 1075);
+		servoWrite(9, 1075);
+		servoWrite(11, 1075);
+	
+		delay(125);
+	}
+}
+void turnLeft()
+{
+	servoWrite(6, 1500);
+	servoWrite(8, 1500);
+	servoWrite(10, 1500);
+	delay(125);
+
+	servoWrite(0, 1075);
+	servoWrite(1, 1500);
+	servoWrite(2, 1075);
+	servoWrite(3, 1500);
+	servoWrite(4, 1075);
+	servoWrite(5, 1500);
+
+	delay(125);
+
+	servoWrite(6, 1075);
+	servoWrite(8, 1075);
+	servoWrite(10, 1075);
+
+	delay(125);
+
+	//Next
+	ps2x.read_gamepad();
+	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
+	if(PlyStnRStickLtRt < 15)
+	{
+		servoWrite(7, 1500);
+		servoWrite(9, 1500);
+		servoWrite(11, 1500);
+		delay(125);
+		servoWrite(0, 1500);
+		servoWrite(1, 1075);
+		servoWrite(2, 1500);
+		servoWrite(3, 1075);
+		servoWrite(4, 1500);
+		servoWrite(5, 1075);
+		delay(125);
+		servoWrite(7, 1075);
+		servoWrite(9, 1075);
+		servoWrite(11, 1075);
+		delay(125);
+	}
+}
+void goForward()
+{
+	servoWrite(6, 1500);
+	servoWrite(11, 1500);
+	delay(125);
+
+	servoWrite(0, 1712.5);
+	servoWrite(1, 1500);
+	servoWrite(2, 1350);
+	servoWrite(3, 1712.5);
+	servoWrite(4, 1500);
+	servoWrite(5, 1350);
+	
+	delay(125);
+
+	servoWrite(6, 1075);
+	servoWrite(11, 1075);
+
+	delay(125);
+
+	//Next
+	servoWrite(8, 1500);
+	servoWrite(9, 1500);
+	delay(125);
+
+	servoWrite(2, 1712.5);
+	servoWrite(0, 1500);
+	servoWrite(1, 1287.5);
+	servoWrite(4, 1712.5);
+	servoWrite(5, 1500);
+	servoWrite(3, 1287.5);
+	
+	delay(125);
+
+	servoWrite(8, 1075);
+	servoWrite(9, 1075);
+
+	delay(125);
+	
+	//Next
+	servoWrite(7, 1500);
+	servoWrite(10, 1500);
+	delay(125);
+
+	servoWrite(1, 1712.5);
+	servoWrite(2, 1500);
+	servoWrite(0, 1287.5);
+	servoWrite(5, 1712.5);
+	servoWrite(3, 1500);
+	servoWrite(4, 1287.5);
+	
+	delay(125);
+
+	servoWrite(7, 1075);
+	servoWrite(10, 1075);
+
+	delay(125);
+
+
+}
+void goBackward()
+{
+
+	servoWrite(6, 1500);
+	servoWrite(8, 1500);
+	servoWrite(10, 1500);
+	delay(125);
+
+	servoWrite(0, 1712.5);
+	servoWrite(1, 1287.5);
+	servoWrite(2, 1712.5);
+
+	servoWrite(3, 1712.5);
+	servoWrite(4, 1287.5);
+	servoWrite(5, 1712.5);
+
+
+	delay(125);
+
+	servoWrite(6, 1075);
+	servoWrite(8, 1075);
+	servoWrite(10, 1075);
+
+	delay(125);
+
+	//Next
+
+	servoWrite(7, 1500);
+	servoWrite(9, 1500);
+	servoWrite(11, 1500);
+	delay(125);
+
+	servoWrite(0, 1287.5);
+	servoWrite(1, 1712.5);
+	servoWrite(2, 1287.5);
+
+	servoWrite(3, 1287.5);
+	servoWrite(4, 1712.5);
+	servoWrite(5, 1287.5);
+
+	delay(125);
+
+	servoWrite(7, 1075);
+	servoWrite(9, 1075);
+	servoWrite(11, 1075);
+
+	delay(125);
+}
+
+void setup()
+{
+//				CLK,CMD,ATT,DAT
+	ps2x.config_gamepad(8, 11, 10, 12, false, false);
+	pinMode(LEDpin, OUTPUT);
+	LEDHdlts = false;
+	pulseconstant = (1000000 / SERVOFREQ) / 4096;
+	pwm.begin();
+	pwm.setPWMFreq(SERVOFREQ);
+	Serial.begin(9600);
+	idleMode();
+	delay(1000);
+}
+
+void loop()
+{
+	ps2x.read_gamepad();
+
+	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
+	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
+	PlyStnLStickUpDn = ps2x.Analog(PSS_LY);
+	PlyStnLStickLtRt = ps2x.Analog(PSS_LX);
+	digitalWrite(LEDpin, LEDHdlts);
+	Serial.println(PlyStnRStickUpDn);
+	
+	if(ps2x.Button(PSB_CROSS))
+	{
+		endLife();
+	}
+	
+	if(PlyStnRStickUpDn == 0)
+	{
+		while(PlyStnRStickUpDn == 0){
+			goForward();
+			ps2x.read_gamepad();
+			PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
+		}
+		idleMode();
+	}
+
+	if(PlyStnRStickUpDn == 255)
+	{
+		while(PlyStnRStickUpDn == 0){
+			goBackward();
+			ps2x.read_gamepad();
+			PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
+		}
+		idleMode();
+	}
+
+	if(PlyStnRStickLtRt < 15)
+	{
+		while(PlyStnRStickLtRt < 15){
+			turnLeft();
+			ps2x.read_gamepad();
+			PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
+		}
+		idleMode();
+	}
+
+	if(PlyStnRStickLtRt == 255)
+	{
+		while(PlyStnRStickLtRt == 255){
+			turnRight();
+			ps2x.read_gamepad();
+			PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
+		}
+		idleMode();
+	}
+	
+	delay(15);
+}
