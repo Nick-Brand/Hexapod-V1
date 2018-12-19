@@ -46,7 +46,6 @@ void endLife()
 	servoWrite(9, 1925);
 	servoWrite(10, 1925);
 	servoWrite(11, 1925);
-	delay(2000);
 }
 void idleMode()
 {
@@ -88,7 +87,8 @@ void turnRight()
 	//Next
 	ps2x.read_gamepad();
 	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
-	if(PlyStnRStickLtRt == 255){
+	if(PlyStnRStickLtRt == 255)
+	{
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
@@ -108,6 +108,10 @@ void turnRight()
 		servoWrite(11, 1075);
 	
 		delay(125);
+	}
+	else
+	{
+		idleMode();
 	}
 }
 void turnLeft()
@@ -153,6 +157,10 @@ void turnLeft()
 		servoWrite(11, 1075);
 		delay(125);
 	}
+	else
+	{
+		idleMode();
+	}
 }
 void goForward()
 {
@@ -175,92 +183,69 @@ void goForward()
 	delay(125);
 
 	//Next
-	servoWrite(8, 1500);
-	servoWrite(9, 1500);
-	delay(125);
-
-	servoWrite(2, 1712.5);
-	servoWrite(0, 1500);
-	servoWrite(1, 1287.5);
-	servoWrite(4, 1712.5);
-	servoWrite(5, 1500);
-	servoWrite(3, 1287.5);
 	
-	delay(125);
+	ps2x.read_gamepad();
+	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
+	if(PlyStnRStickUpDn == 0)
+	{
+		servoWrite(8, 1500);
+		servoWrite(9, 1500);
+		delay(125);
 
-	servoWrite(8, 1075);
-	servoWrite(9, 1075);
+		servoWrite(2, 1712.5);
+		servoWrite(0, 1500);
+		servoWrite(1, 1287.5);
+		servoWrite(4, 1712.5);
+		servoWrite(5, 1500);
+		servoWrite(3, 1287.5);
 
-	delay(125);
+		delay(125);
+
+		servoWrite(8, 1075);
+		servoWrite(9, 1075);
+
+		delay(125);
+	}
+	else
+	{
+		idleMode();
+	}
 	
 	//Next
-	servoWrite(7, 1500);
-	servoWrite(10, 1500);
-	delay(125);
-
-	servoWrite(1, 1712.5);
-	servoWrite(2, 1500);
-	servoWrite(0, 1287.5);
-	servoWrite(5, 1712.5);
-	servoWrite(3, 1500);
-	servoWrite(4, 1287.5);
 	
-	delay(125);
+	ps2x.read_gamepad();
+	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
+	if(PlyStnRStickUpDn == 0)
+	{
+		servoWrite(7, 1500);
+		servoWrite(10, 1500);
+		delay(125);
 
-	servoWrite(7, 1075);
-	servoWrite(10, 1075);
+		servoWrite(1, 1712.5);
+		servoWrite(2, 1500);
+		servoWrite(0, 1287.5);
+		servoWrite(5, 1712.5);
+		servoWrite(3, 1500);
+		servoWrite(4, 1287.5);
 
-	delay(125);
+		delay(125);
+
+		servoWrite(7, 1075);
+		servoWrite(10, 1075);
+
+		delay(125);
+	}
+	else
+	{
+		idleMode();
+	}
 
 
 }
 void goBackward()
 {
-
-	servoWrite(6, 1500);
-	servoWrite(8, 1500);
-	servoWrite(10, 1500);
-	delay(125);
-
-	servoWrite(0, 1712.5);
-	servoWrite(1, 1287.5);
-	servoWrite(2, 1712.5);
-
-	servoWrite(3, 1712.5);
-	servoWrite(4, 1287.5);
-	servoWrite(5, 1712.5);
-
-
-	delay(125);
-
-	servoWrite(6, 1075);
-	servoWrite(8, 1075);
-	servoWrite(10, 1075);
-
-	delay(125);
-
-	//Next
-
-	servoWrite(7, 1500);
-	servoWrite(9, 1500);
-	servoWrite(11, 1500);
-	delay(125);
-
-	servoWrite(0, 1287.5);
-	servoWrite(1, 1712.5);
-	servoWrite(2, 1287.5);
-
-	servoWrite(3, 1287.5);
-	servoWrite(4, 1712.5);
-	servoWrite(5, 1287.5);
-
-	delay(125);
-
-	servoWrite(7, 1075);
-	servoWrite(9, 1075);
-	servoWrite(11, 1075);
-
-	delay(125);
+	idleMode();
+	// Not here yet
 }
 
 void setup()
@@ -291,7 +276,17 @@ void loop()
 	if(ps2x.Button(PSB_CROSS))
 	{
 		endLife();
+		while(true)
+		{
+			if(ps2x.Button(PSAB_CROSS))
+			{
+				idleMode();
+				break;
+			}
+		}
+		
 	}
+	
 	
 	if(PlyStnRStickUpDn == 0)
 	{
