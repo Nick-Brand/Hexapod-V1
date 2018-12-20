@@ -10,6 +10,7 @@
 
 PS2X ps2x;
 const int LEDpin = 13;
+int fastver = 75;
 int PlyStnRStickUpDn = 0;
 int PlyStnRStickLtRt = 0;
 int PlyStnLStickUpDn = 0;
@@ -262,7 +263,7 @@ void loop()
 	{
 		if(speed == 125)
 		{
-			speed = 50;
+			speed = 75;
 		}
 		else
 		{
@@ -273,27 +274,27 @@ void loop()
 	if(ps2x.ButtonPressed(PSB_TRIANGLE))
 	{
 		servoWrite(6, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(6, 1075);
-		delay(125);
+		delay(fastver);
 		servoWrite(7, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(7, 1075);
-		delay(125);
+		delay(fastver);
 		servoWrite(8, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(8, 1075);
-		delay(125);
+		delay(fastver);
 		servoWrite(9, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(9, 1075);
-		delay(125);
+		delay(fastver);
 		servoWrite(10, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(10, 1075);
-		delay(125);
+		delay(fastver);
 		servoWrite(11, 1925);
-		delay(125);
+		delay(fastver);
 		servoWrite(11, 1075);
 	}
 	
