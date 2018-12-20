@@ -270,6 +270,33 @@ void loop()
 		}
 	}
 	
+	if(ps2x.ButtonPressed(PSB_TRIANGLE))
+	{
+		servoWrite(6, 1925);
+		delay(125);
+		servoWrite(6, 1075);
+		delay(125);
+		servoWrite(7, 1925);
+		delay(125);
+		servoWrite(7, 1075);
+		delay(125);
+		servoWrite(8, 1925);
+		delay(125);
+		servoWrite(8, 1075);
+		delay(125);
+		servoWrite(9, 1925);
+		delay(125);
+		servoWrite(9, 1075);
+		delay(125);
+		servoWrite(10, 1925);
+		delay(125);
+		servoWrite(10, 1075);
+		delay(125);
+		servoWrite(11, 1925);
+		delay(125);
+		servoWrite(11, 1075);
+	}
+	
 	if(PlyStnRStickUpDn == 0)
 	{
 		while(PlyStnRStickUpDn == 0){
