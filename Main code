@@ -10,7 +10,7 @@
 
 PS2X ps2x;
 const int LEDpin = 13;
-int fastver = 75;
+int fastver = 100;
 int PlyStnRStickUpDn = 0;
 int PlyStnRStickLtRt = 0;
 int PlyStnLStickUpDn = 0;
