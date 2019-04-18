@@ -24,10 +24,43 @@ int rStickLeftRight;
 int lStickUpDown;
 int lStickLeftRight;
 
+int factor = 1;
+#define SUBMODE_1 '1'
+#define SUBMODE_2 '2'
+#define SUBMODE_3 '3'
+#define SUBMODE_4 '4'
+byte submode = SUBMODE_1;
 byte deferServoSet = 0;
 #define SERVO_IIC_ADDR  (0x40)    // default servo driver IIC address
 Adafruit_PWMServoDriver servoDriver = Adafruit_PWMServoDriver(SERVO_IIC_ADDR);
 int FreqMult = 1;
+#define TRIPOD_CYCLE_TIME 750
+#define KNEE_UP_MAX 180
+#define KNEE_UP    150
+#define KNEE_RELAX  120
+#define KNEE_NEUTRAL 90
+#define KNEE_CROUCH 110
+#define KNEE_HALF_CROUCH 80
+#define KNEE_STAND 30
+#define KNEE_DOWN  30
+#define KNEE_TIPTOES 5
+#define KNEE_FOLD 170
+#define KNEE_SCAMPER (KNEE_NEUTRAL-20)
+#define KNEE_TRIPOD_UP (KNEE_NEUTRAL-40)
+#define KNEE_TRIPOD_ADJ 30
+#define HIPSWING 25      // how far to swing hips on gaits like tripod or quadruped
+#define HIPSMALLSWING 10  // when in fine adjust mode how far to move hips
+#define HIPSWING_RIPPLE 20
+#define HIP_FORWARD_MAX 175
+#define HIP_FORWARD (HIP_NEUTRAL+HIPSWING)
+#define HIP_FORWARD_SMALL (HIP_NEUTRAL+HIPSMALLSWING)
+#define HIP_NEUTRAL 90
+#define HIP_BACKWARD (HIP_NEUTRAL-HIPSWING)
+#define HIP_BACKWARD_SMALL (HIP_NEUTRAL-HIPSMALLSWING)
+#define HIP_BACKWARD_MAX 0
+#define HIP_FORWARD_RIPPLE (HIP_NEUTRAL+HIPSWING_RIPPLE)
+#define HIP_BACKWARD_RIPPLE (HIP_NEUTRAL-HIPSWING_RIPPLE)
+#define HIP_FOLD 150
 #define ISFRONTLEG(LEG) (LEG==0||LEG==5)
 #define ISMIDLEG(LEG)   (LEG==1||LEG==4)
 #define ISBACKLEG(LEG)  (LEG==2||LEG==3)
@@ -322,6 +355,13 @@ void goBackward()
 	// Not here yet
 }
 
+void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod)
+{
+
+	// this version makes leanangle zero
+	gait_tripod(reverse, hipforward, hipbackward,
+	            kneeup, kneedown, timeperiod, 0);
+}
 void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod, int leanangle)
 {
 
@@ -591,6 +631,7 @@ void loop()
 		servoWrite(11, 1075);
 	}
 
+	/**
 	if(PlyStnRStickUpDn == 0) //Forward
 	{
 		while(PlyStnRStickUpDn == 0)
@@ -600,6 +641,15 @@ void loop()
 			PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 		}
 		idleMode();
+	}
+	*/
+
+	if(PlyStnRStickUpDn == 0) //Forward
+	{
+		gait_tripod(1, (submode == SUBMODE_3) ? HIP_BACKWARD_SMALL : HIP_BACKWARD,
+		            (submode == SUBMODE_3) ? HIP_FORWARD_SMALL : HIP_FORWARD,
+		            KNEE_TRIPOD_UP + factor * KNEE_TRIPOD_ADJ, KNEE_DOWN,
+		            TRIPOD_CYCLE_TIME * factor);
 	}
 
 	if(PlyStnRStickUpDn == 255) //Backward
