@@ -6,10 +6,12 @@
 #include <SPI.h>
 #include <EEPROM.h>
 
+
 //SERVOMIN  650
 //SERVOMAX  2350
 // 1075 for middle min
 // 1925 for middle max
+
 
 PS2X ps2x;
 const int LEDpin = 13;
@@ -23,6 +25,7 @@ int rStickUpDown;
 int rStickLeftRight;
 int lStickUpDown;
 int lStickLeftRight;
+
 
 int factor = 1;
 #define SUBMODE_1 '1'
@@ -86,9 +89,11 @@ short ServoPos[2 * NUM_LEGS + MAX_GRIPSERVOS]; // the last commanded position of
 long ServoTime[2 * NUM_LEGS + MAX_GRIPSERVOS]; // the time that each servo was last commanded to a new position
 byte ServoTrim[2 * NUM_LEGS + MAX_GRIPSERVOS]; // trim values for fine adjustments to servo horn positions
 
+
 float SERVOFREQ = 50;
 float pulseconstant;
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
 
 void transactServos()
 {
@@ -105,6 +110,7 @@ void commitServos()
 }
 void checkForCrashingHips()
 {
+
 
 	for (int leg = 0; leg < NUM_LEGS; leg++)
 	{
@@ -130,6 +136,7 @@ void checkForCrashingHips()
 		// if we get here then the legs are touching, we will adjust them so that the difference is less than 85
 		int adjust = (diff - 85) / 2 + 1; // each leg will get adjusted half the amount needed to avoid the crash
 
+
 		// to debug crash detection, make the following line #if 1, else make it #if 0
 #if 1
 		Serial.print("#CRASH:");
@@ -146,8 +153,10 @@ void checkForCrashingHips()
 		Serial.println(adjust);
 #endif
 
+
 		setServo(leg, ServoPos[leg] + adjust);
 		setServo(nextleg, ServoPos[nextleg] - adjust);
+
 
 	}
 }
@@ -159,7 +168,9 @@ void setServo(int servonum, int position)
 	}
 	ServoPos[servonum] = position;  // keep data on where the servo was last commanded to go
 
+
 	int p = map(position, 0, 180, SERVOMIN, SERVOMAX);
+
 
 	if (TrimInEffect && servonum < 12)
 	{
@@ -167,15 +178,19 @@ void setServo(int servonum, int position)
 		p += ServoTrim[servonum] - TRIM_ZERO;   // adjust microseconds by trim value which is renormalized to the range -127 to 128
 	}
 
+
 	if (!deferServoSet)
 	{
 		servoDriver.setPWM(servonum, 0, p);
 	}
 
 
+
+
 	// DEBUG: Uncomment the next line to debug setservo problems. It causes some lagginess due to all the printing
 	//Serial.print("SS:");Serial.print(servonum);Serial.print(":");Serial.println(position);
 }
+
 
 void servoWrite(uint8_t n, float pulse)
 {
@@ -206,6 +221,7 @@ void turnRight()
 	servoWrite(10, 1500);
 	delay(speed);
 
+
 	servoWrite(0, 1925);
 	servoWrite(1, 1500);
 	servoWrite(2, 1925);
@@ -213,13 +229,17 @@ void turnRight()
 	servoWrite(4, 1925);
 	servoWrite(5, 1500);
 
+
 	delay(speed);
+
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
+
 	delay(speed);
+
 
 	//Next
 	ps2x.read_gamepad();
@@ -231,6 +251,7 @@ void turnRight()
 		servoWrite(11, 1500);
 		delay(speed);
 
+
 		servoWrite(0, 1500);
 		servoWrite(1, 1925);
 		servoWrite(2, 1500);
@@ -238,11 +259,14 @@ void turnRight()
 		servoWrite(4, 1500);
 		servoWrite(5, 1925);
 
+
 		delay(speed);
+
 
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
+
 
 		delay(speed);
 	}
@@ -258,6 +282,7 @@ void turnLeft()
 	servoWrite(10, 1500);
 	delay(speed);
 
+
 	servoWrite(0, 1075);
 	servoWrite(1, 1500);
 	servoWrite(2, 1075);
@@ -265,13 +290,17 @@ void turnLeft()
 	servoWrite(4, 1075);
 	servoWrite(5, 1500);
 
+
 	delay(speed);
+
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
+
 	delay(speed);
+
 
 	//Next
 	ps2x.read_gamepad();
@@ -282,7 +311,9 @@ void turnLeft()
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
 
+
 		delay(speed);
+
 
 		servoWrite(0, 1500);
 		servoWrite(1, 1075);
@@ -291,11 +322,14 @@ void turnLeft()
 		servoWrite(4, 1500);
 		servoWrite(5, 1075);
 
+
 		delay(speed);
+
 
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
+
 
 		delay(speed);
 	}
@@ -311,6 +345,7 @@ void goForward()
 	servoWrite(10, 1500);
 	delay(speed);
 
+
 	servoWrite(0, 1700);
 	servoWrite(1, 1075);
 	servoWrite(2, 1700);
@@ -318,21 +353,28 @@ void goForward()
 	servoWrite(4, 1075);
 	servoWrite(5, 1700);
 
+
 	delay(speed);
+
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
+
 	delay(speed);
 
+
 	//Next
+
 
 	servoWrite(7, 1500);
 	servoWrite(9, 1500);
 	servoWrite(11, 1500);
 
+
 	delay(speed);
+
 
 	servoWrite(0, 1350);
 	servoWrite(1, 1925);
@@ -341,11 +383,14 @@ void goForward()
 	servoWrite(4, 1925);
 	servoWrite(5, 1350);
 
+
 	delay(speed);
+
 
 	servoWrite(7, 1075);
 	servoWrite(9, 1075);
 	servoWrite(11, 1075);
+
 
 	delay(speed);
 }
@@ -355,8 +400,10 @@ void goBackward()
 	// Not here yet
 }
 
+
 void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod)
 {
+
 
 	// this version makes leanangle zero
 	gait_tripod(reverse, hipforward, hipbackward,
@@ -365,10 +412,12 @@ void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int k
 void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod, int leanangle)
 {
 
+
 	// the gait consists of 6 phases. This code determines what phase
 	// we are currently in by using the millis clock modulo the
 	// desired time period that all six  phases should consume.
 	// Right now each phase is an equal amount of time but this may not be optimal
+
 
 	if (reverse)
 	{
@@ -377,14 +426,18 @@ void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int k
 		hipbackward = tmp;
 	}
 
+
 #define NUM_TRIPOD_PHASES 6
 #define FBSHIFT    15   // shift front legs back, back legs forward, this much
+
 
 	long t = millis() % timeperiod;
 	long phase = (NUM_TRIPOD_PHASES * t) / timeperiod;
 
+
 	//Serial.print("PHASE: ");
 	//Serial.println(phase);
+
 
 	transactServos(); // defer leg motions until after checking for crashes
 	switch (phase)
@@ -395,6 +448,7 @@ void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int k
 			setLeg(TRIPOD1_LEGS, NOMOVE, kneeup, 0, 0, leanangle);
 			break;
 
+
 		case 1:
 			// in this phase, the center-left and noncenter-right legs move forward
 			// at the hips, while the rest of the legs move backward at the hip
@@ -402,21 +456,25 @@ void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int k
 			setLeg(TRIPOD2_LEGS, hipbackward, NOMOVE, FBSHIFT);
 			break;
 
+
 		case 2:
 			// now put the first set of legs back down on the ground
 			setLeg(TRIPOD1_LEGS, NOMOVE, kneedown, 0, 0, leanangle);
 			break;
+
 
 		case 3:
 			// lift up the other set of legs at the knee
 			setLeg(TRIPOD2_LEGS, NOMOVE, kneeup, 0, 0, leanangle);
 			break;
 
+
 		case 4:
 			// similar to phase 1, move raised legs forward and lowered legs backward
 			setLeg(TRIPOD1_LEGS, hipbackward, NOMOVE, FBSHIFT);
 			setLeg(TRIPOD2_LEGS, hipforward, NOMOVE, FBSHIFT);
 			break;
+
 
 		case 5:
 			// put the second set of legs down, and the cycle repeats
@@ -480,6 +538,7 @@ void setLeg(int legmask, int hip_pos, int knee_pos, int adj, int raw, int leanan
 					//Serial.print("Lean:"); Serial.print(leanangle); Serial.print("pos="); Serial.println(pos);
 				}
 
+
 				setKnee(i, pos);
 			}
 		}
@@ -504,6 +563,7 @@ void setHip(int leg, int pos)
 	// that 0 degrees moves "forward" i.e. toward legs 5-0 which is
 	// nominally the front of the robot
 
+
 }
 void setHip(int leg, int pos, int adj)
 {
@@ -521,6 +581,7 @@ void setHip(int leg, int pos, int adj)
 		pos = 180 - pos;
 	}
 
+
 	setHipRaw(leg, pos);
 	// this version of setHip adjusts not only for left and right,
 	// but also shifts the front legs a little back and the back legs
@@ -537,6 +598,8 @@ void setKnee(int leg, int pos)
 }
 
 
+
+
 void setup()
 {
 //				CLK,CMD,ATT,DAT
@@ -550,17 +613,22 @@ void setup()
 	delay(1000);
 }
 
+
 void loop()
 {
 
+
 	ps2x.read_gamepad();
+
 
 	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 	PlyStnLStickUpDn = ps2x.Analog(PSS_LY);
 	PlyStnLStickLtRt = ps2x.Analog(PSS_LX);
 
+
 	Serial.println(PlyStnRStickUpDn);
+
 
 	if(ps2x.ButtonPressed(PSB_CROSS))
 	{
@@ -590,7 +658,9 @@ void loop()
 			delay(15);
 		}
 
+
 	}
+
 
 	if(ps2x.ButtonPressed(PSB_SQUARE))
 	{
@@ -603,6 +673,7 @@ void loop()
 			speed = 125;
 		}
 	}
+
 
 	if(ps2x.ButtonPressed(PSB_TRIANGLE))
 	{
@@ -631,6 +702,7 @@ void loop()
 		servoWrite(11, 1075);
 	}
 
+
 	/**
 	if(PlyStnRStickUpDn == 0) //Forward
 	{
@@ -644,6 +716,7 @@ void loop()
 	}
 	*/
 
+
 	if(PlyStnRStickUpDn == 0) //Forward
 	{
 		gait_tripod(1, (submode == SUBMODE_3) ? HIP_BACKWARD_SMALL : HIP_BACKWARD,
@@ -651,6 +724,7 @@ void loop()
 		            KNEE_TRIPOD_UP + factor * KNEE_TRIPOD_ADJ, KNEE_DOWN,
 		            TRIPOD_CYCLE_TIME * factor);
 	}
+
 
 	if(PlyStnRStickUpDn == 255) //Backward
 	{
@@ -663,6 +737,7 @@ void loop()
 		idleMode();
 	}
 
+
 	if(PlyStnRStickLtRt < 15) //Right
 	{
 		while(PlyStnRStickLtRt < 15)
@@ -674,6 +749,7 @@ void loop()
 		idleMode();
 	}
 
+
 	if(PlyStnRStickLtRt == 255) //Left
 	{
 		while(PlyStnRStickLtRt == 255)
@@ -684,6 +760,4 @@ void loop()
 		}
 		idleMode();
 	}
-
-	delay(15);
 }
