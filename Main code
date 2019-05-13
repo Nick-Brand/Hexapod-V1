@@ -346,6 +346,6 @@ void loop()
   	else
   	{
   		idleMode();
-  		delay(15);
+  		delay(30);
   	}
 }
