@@ -80,20 +80,20 @@ void turnRight()
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
 		delay(speed);
-	
+
 		servoWrite(0, 1500);
 		servoWrite(1, 1925);
 		servoWrite(2, 1500);
 		servoWrite(3, 1925);
 		servoWrite(4, 1500);
 		servoWrite(5, 1925);
-	
+
 		delay(speed);
-	
+
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
-	
+
 		delay(speed);
 	}
 	else
@@ -131,22 +131,22 @@ void turnLeft()
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
-		
+
 		delay(speed);
-		
+
 		servoWrite(0, 1500);
 		servoWrite(1, 1075);
 		servoWrite(2, 1500);
 		servoWrite(3, 1075);
 		servoWrite(4, 1500);
 		servoWrite(5, 1075);
-		
+
 		delay(speed);
-		
+
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
-		
+
 		delay(speed);
 	}
 	else
@@ -167,7 +167,7 @@ void goForward()
 	servoWrite(3, 1700);
 	servoWrite(4, 1300);
 	servoWrite(5, 1800);
-	
+
 	delay(speed);
 
 	servoWrite(6, 1075);
@@ -177,11 +177,11 @@ void goForward()
 	delay(speed);
 
 	//Next
-	
+
 	servoWrite(7, 1500);
 	servoWrite(9, 1500);
 	servoWrite(11, 1500);
-	
+
 	delay(speed);
 
 	servoWrite(0, 1200);
@@ -190,13 +190,13 @@ void goForward()
 	servoWrite(3, 1300);
 	servoWrite(4, 1700);
 	servoWrite(5, 1500);
-		
+
 	delay(speed);
 
 	servoWrite(7, 1075);
 	servoWrite(9, 1075);
 	servoWrite(11, 1075);
-	
+
 	delay(speed);
 }
 void goBackward()
@@ -221,17 +221,18 @@ void setup()
 void loop()
 {
 	error = ps2x.config_gamepad(8, 11, 10, 12, false, false);
-  
-  	if(error == 0){
+
+	if(error == 0)
+	{
 		ps2x.read_gamepad();
-	
+
 		PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 		PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 		PlyStnLStickUpDn = ps2x.Analog(PSS_LY);
 		PlyStnLStickLtRt = ps2x.Analog(PSS_LX);
-		
+
 		Serial.println(PlyStnRStickUpDn);
-		
+
 		if(ps2x.ButtonPressed(PSB_CROSS))
 		{
 			ps2x.read_gamepad();
@@ -259,9 +260,9 @@ void loop()
 				}
 				delay(15);
 			}
-			
+
 		}
-		
+
 		if(ps2x.ButtonPressed(PSB_SQUARE))
 		{
 			if(speed == 125)
@@ -273,7 +274,7 @@ void loop()
 				speed = 125;
 			}
 		}
-		
+
 		if(ps2x.ButtonPressed(PSB_TRIANGLE))
 		{
 			servoWrite(6, 1925);
@@ -300,52 +301,57 @@ void loop()
 			delay(fastver);
 			servoWrite(11, 1075);
 		}
-		
+
 		if(PlyStnRStickUpDn == 0)
 		{
-			while(PlyStnRStickUpDn == 0){
+			while(PlyStnRStickUpDn == 0)
+			{
 				goForward();
 				ps2x.read_gamepad();
 				PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 			}
 			idleMode();
 		}
-	
+
 		if(PlyStnRStickUpDn == 255)
 		{
-			while(PlyStnRStickUpDn == 0){
+			while(PlyStnRStickUpDn == 0)
+			{
 				goBackward();
 				ps2x.read_gamepad();
 				PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 			}
 			idleMode();
 		}
-	
+
 		if(PlyStnRStickLtRt < 15)
 		{
-			while(PlyStnRStickLtRt < 15){
+			while(PlyStnRStickLtRt < 15)
+			{
 				turnLeft();
 				ps2x.read_gamepad();
 				PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 			}
 			idleMode();
 		}
-	
+
 		if(PlyStnRStickLtRt == 255)
 		{
-			while(PlyStnRStickLtRt == 255){
+			while(PlyStnRStickLtRt == 255)
+			{
 				turnRight();
 				ps2x.read_gamepad();
 				PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 			}
 			idleMode();
 		}
-		
+
 		delay(15);
-  	}
-  	else
-  	{
-  		idleMode();
-  		delay(30);
-  	}
+	}
+
+	else
+	{
+		idleMode();
+		delay(30);
+	}
 }
