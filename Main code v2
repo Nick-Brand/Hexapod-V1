@@ -1,196 +1,24 @@
-#include <PS2X_lib.h>  //for v1.6
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <Servo.h>
-#include <SoftwareSerial.h>
-#include <SPI.h>
-#include <EEPROM.h>
 
+#include <SoftwareSerial.h>
+#include "Cytron_PS2Shield.h"
 
 //SERVOMIN  650
 //SERVOMAX  2350
 // 1075 for middle min
 // 1925 for middle max
 
-
-PS2X ps2x;
 const int LEDpin = 13;
 int fastver = 100;
-int PlyStnRStickUpDn = 0;
-int PlyStnRStickLtRt = 0;
-int PlyStnLStickUpDn = 0;
-int PlyStnLStickLtRt = 0;
 int speed = 125;
-int rStickUpDown;
-int rStickLeftRight;
-int lStickUpDown;
-int lStickLeftRight;
 
-
-int factor = 1;
-#define SUBMODE_1 '1'
-#define SUBMODE_2 '2'
-#define SUBMODE_3 '3'
-#define SUBMODE_4 '4'
-byte submode = SUBMODE_1;
-byte deferServoSet = 0;
-#define SERVO_IIC_ADDR  (0x40)    // default servo driver IIC address
-Adafruit_PWMServoDriver servoDriver = Adafruit_PWMServoDriver(SERVO_IIC_ADDR);
-int FreqMult = 1;
-#define TRIPOD_CYCLE_TIME 750
-#define KNEE_UP_MAX 180
-#define KNEE_UP    150
-#define KNEE_RELAX  120
-#define KNEE_NEUTRAL 90
-#define KNEE_CROUCH 110
-#define KNEE_HALF_CROUCH 80
-#define KNEE_STAND 30
-#define KNEE_DOWN  30
-#define KNEE_TIPTOES 5
-#define KNEE_FOLD 170
-#define KNEE_SCAMPER (KNEE_NEUTRAL-20)
-#define KNEE_TRIPOD_UP (KNEE_NEUTRAL-40)
-#define KNEE_TRIPOD_ADJ 30
-#define HIPSWING 25      // how far to swing hips on gaits like tripod or quadruped
-#define HIPSMALLSWING 10  // when in fine adjust mode how far to move hips
-#define HIPSWING_RIPPLE 20
-#define HIP_FORWARD_MAX 175
-#define HIP_FORWARD (HIP_NEUTRAL+HIPSWING)
-#define HIP_FORWARD_SMALL (HIP_NEUTRAL+HIPSMALLSWING)
-#define HIP_NEUTRAL 90
-#define HIP_BACKWARD (HIP_NEUTRAL-HIPSWING)
-#define HIP_BACKWARD_SMALL (HIP_NEUTRAL-HIPSMALLSWING)
-#define HIP_BACKWARD_MAX 0
-#define HIP_FORWARD_RIPPLE (HIP_NEUTRAL+HIPSWING_RIPPLE)
-#define HIP_BACKWARD_RIPPLE (HIP_NEUTRAL-HIPSWING_RIPPLE)
-#define HIP_FOLD 150
-#define ISFRONTLEG(LEG) (LEG==0||LEG==5)
-#define ISMIDLEG(LEG)   (LEG==1||LEG==4)
-#define ISBACKLEG(LEG)  (LEG==2||LEG==3)
-#define ISLEFTLEG(LEG)  (LEG==0||LEG==1||LEG==2)
-#define ISRIGHTLEG(LEG) (LEG==3||LEG==4||LEG==5)
-#define PWMFREQUENCY (60*FreqMult)
-#define SERVOMIN  (190*FreqMult) // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  (540*FreqMult) // this is the 'maximum' pulse length count (out of 4096)
-#define NUM_LEGS 6
-#define MAX_GRIPSERVOS 2
-#define NUM_GRIPSERVOS 0
-#define TRIPOD1_LEGS  0b010101
-#define TRIPOD2_LEGS  0b101010
-#define NOMOVE (-1)
-#define TRIM_ZERO 127   // this value is the midpoint of the trim range (a byte)
-#define LEFT_START 3  // first leg that is on the left side
-#define RIGHT_START 0 // first leg that is on the right side
-#define KNEE_OFFSET 6 // add this to a leg number to get the knee servo number
-byte TrimInEffect = 1;
-byte TrimCurLeg = 0;
-byte TrimPose = 0;
-short ServoPos[2 * NUM_LEGS + MAX_GRIPSERVOS]; // the last commanded position of each servo
-long ServoTime[2 * NUM_LEGS + MAX_GRIPSERVOS]; // the time that each servo was last commanded to a new position
-byte ServoTrim[2 * NUM_LEGS + MAX_GRIPSERVOS]; // trim values for fine adjustments to servo horn positions
-
+Cytron_PS2Shield ps2(2, 3); // SoftwareSerial: Rx and Tx pin
 
 float SERVOFREQ = 50;
 float pulseconstant;
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
-
-
-void transactServos()
-{
-	deferServoSet = 1;
-}
-void commitServos()
-{
-	checkForCrashingHips();
-	deferServoSet = 0;
-	for (int servo = 0; servo < 2 * NUM_LEGS + NUM_GRIPSERVOS; servo++)
-	{
-		setServo(servo, ServoPos[servo]);
-	}
-}
-void checkForCrashingHips()
-{
-
-
-	for (int leg = 0; leg < NUM_LEGS; leg++)
-	{
-		if (ServoPos[leg] > 85)
-		{
-			continue; // it's not possible to crash into the next leg in line unless the angle is 85 or less
-		}
-		int nextleg = ((leg + 1) % NUM_LEGS);
-		if (ServoPos[nextleg] < 100)
-		{
-			continue;   // it's not possible for there to be a crash if the next leg is less than 100 degrees
-			// there is a slight assymmetry due to the way the servo shafts are positioned, that's why
-			// this number does not match the 85 number above
-		}
-		int diff = ServoPos[nextleg] - ServoPos[leg];
-		// There's a fairly linear relationship
-		if (diff <= 85)
-		{
-			// if the difference between the two leg positions is less than about 85 then there
-			// is not going to be a crash (or maybe just a slight touch that won't really cause issues)
-			continue;
-		}
-		// if we get here then the legs are touching, we will adjust them so that the difference is less than 85
-		int adjust = (diff - 85) / 2 + 1; // each leg will get adjusted half the amount needed to avoid the crash
-
-
-		// to debug crash detection, make the following line #if 1, else make it #if 0
-#if 1
-		Serial.print("#CRASH:");
-		Serial.print(leg);
-		Serial.print("=");
-		Serial.print(ServoPos[leg]);
-		Serial.print("/");
-		Serial.print(nextleg);
-		Serial.print("=");
-		Serial.print(ServoPos[nextleg]);
-		Serial.print(" Diff=");
-		Serial.print(diff);
-		Serial.print(" ADJ=");
-		Serial.println(adjust);
-#endif
-
-
-		setServo(leg, ServoPos[leg] + adjust);
-		setServo(nextleg, ServoPos[nextleg] - adjust);
-
-
-	}
-}
-void setServo(int servonum, int position)
-{
-	if (position != ServoPos[servonum])
-	{
-		ServoTime[servonum] = millis();
-	}
-	ServoPos[servonum] = position;  // keep data on where the servo was last commanded to go
-
-
-	int p = map(position, 0, 180, SERVOMIN, SERVOMAX);
-
-
-	if (TrimInEffect && servonum < 12)
-	{
-		//Serial.print("Trim leg "); Serial.print(servonum); Serial.print(" "); Serial.println(ServoTrim[servonum] - TRIM_ZERO);
-		p += ServoTrim[servonum] - TRIM_ZERO;   // adjust microseconds by trim value which is renormalized to the range -127 to 128
-	}
-
-
-	if (!deferServoSet)
-	{
-		servoDriver.setPWM(servonum, 0, p);
-	}
-
-
-
-
-	// DEBUG: Uncomment the next line to debug setservo problems. It causes some lagginess due to all the printing
-	//Serial.print("SS:");Serial.print(servonum);Serial.print(":");Serial.println(position);
-}
-
 
 void servoWrite(uint8_t n, float pulse)
 {
@@ -221,7 +49,6 @@ void turnRight()
 	servoWrite(10, 1500);
 	delay(speed);
 
-
 	servoWrite(0, 1925);
 	servoWrite(1, 1500);
 	servoWrite(2, 1925);
@@ -229,28 +56,21 @@ void turnRight()
 	servoWrite(4, 1925);
 	servoWrite(5, 1500);
 
-
 	delay(speed);
-
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
-
 	delay(speed);
 
-
 	//Next
-	ps2x.read_gamepad();
-	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
-	if(PlyStnRStickLtRt == 255)
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_RIGHT) == 100)
 	{
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
 		delay(speed);
-
 
 		servoWrite(0, 1500);
 		servoWrite(1, 1925);
@@ -259,14 +79,11 @@ void turnRight()
 		servoWrite(4, 1500);
 		servoWrite(5, 1925);
 
-
 		delay(speed);
-
 
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
-
 
 		delay(speed);
 	}
@@ -282,7 +99,6 @@ void turnLeft()
 	servoWrite(10, 1500);
 	delay(speed);
 
-
 	servoWrite(0, 1075);
 	servoWrite(1, 1500);
 	servoWrite(2, 1075);
@@ -290,30 +106,23 @@ void turnLeft()
 	servoWrite(4, 1075);
 	servoWrite(5, 1500);
 
-
 	delay(speed);
-
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
-
 	delay(speed);
 
-
 	//Next
-	ps2x.read_gamepad();
-	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
-	if(PlyStnRStickLtRt < 15)
+
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
 	{
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
 		servoWrite(11, 1500);
 
-
 		delay(speed);
-
 
 		servoWrite(0, 1500);
 		servoWrite(1, 1075);
@@ -322,14 +131,11 @@ void turnLeft()
 		servoWrite(4, 1500);
 		servoWrite(5, 1075);
 
-
 		delay(speed);
-
 
 		servoWrite(7, 1075);
 		servoWrite(9, 1075);
 		servoWrite(11, 1075);
-
 
 		delay(speed);
 	}
@@ -345,52 +151,41 @@ void goForward()
 	servoWrite(10, 1500);
 	delay(speed);
 
-
-	servoWrite(0, 1700);
-	servoWrite(1, 1075);
-	servoWrite(2, 1700);
+	servoWrite(0, 1500);
+	servoWrite(1, 1300);
+	servoWrite(2, 1800);
 	servoWrite(3, 1700);
-	servoWrite(4, 1075);
-	servoWrite(5, 1700);
-
+	servoWrite(4, 1300);
+	servoWrite(5, 1800);
 
 	delay(speed);
-
 
 	servoWrite(6, 1075);
 	servoWrite(8, 1075);
 	servoWrite(10, 1075);
 
-
 	delay(speed);
 
-
 	//Next
-
 
 	servoWrite(7, 1500);
 	servoWrite(9, 1500);
 	servoWrite(11, 1500);
 
-
 	delay(speed);
 
-
-	servoWrite(0, 1350);
-	servoWrite(1, 1925);
-	servoWrite(2, 1350);
-	servoWrite(3, 1350);
-	servoWrite(4, 1925);
-	servoWrite(5, 1350);
-
+	servoWrite(0, 1200);
+	servoWrite(1, 1700);
+	servoWrite(2, 1500);
+	servoWrite(3, 1300);
+	servoWrite(4, 1700);
+	servoWrite(5, 1500);
 
 	delay(speed);
-
 
 	servoWrite(7, 1075);
 	servoWrite(9, 1075);
 	servoWrite(11, 1075);
-
 
 	delay(speed);
 }
@@ -400,210 +195,9 @@ void goBackward()
 	// Not here yet
 }
 
-
-void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod)
-{
-
-
-	// this version makes leanangle zero
-	gait_tripod(reverse, hipforward, hipbackward,
-	            kneeup, kneedown, timeperiod, 0);
-}
-void gait_tripod(int reverse, int hipforward, int hipbackward, int kneeup, int kneedown, long timeperiod, int leanangle)
-{
-
-
-	// the gait consists of 6 phases. This code determines what phase
-	// we are currently in by using the millis clock modulo the
-	// desired time period that all six  phases should consume.
-	// Right now each phase is an equal amount of time but this may not be optimal
-
-
-	if (reverse)
-	{
-		int tmp = hipforward;
-		hipforward = hipbackward;
-		hipbackward = tmp;
-	}
-
-
-#define NUM_TRIPOD_PHASES 6
-#define FBSHIFT    15   // shift front legs back, back legs forward, this much
-
-
-	long t = millis() % timeperiod;
-	long phase = (NUM_TRIPOD_PHASES * t) / timeperiod;
-
-
-	//Serial.print("PHASE: ");
-	//Serial.println(phase);
-
-
-	transactServos(); // defer leg motions until after checking for crashes
-	switch (phase)
-	{
-		case 0:
-			// in this phase, center-left and noncenter-right legs raise up at
-			// the knee
-			setLeg(TRIPOD1_LEGS, NOMOVE, kneeup, 0, 0, leanangle);
-			break;
-
-
-		case 1:
-			// in this phase, the center-left and noncenter-right legs move forward
-			// at the hips, while the rest of the legs move backward at the hip
-			setLeg(TRIPOD1_LEGS, hipforward, NOMOVE, FBSHIFT);
-			setLeg(TRIPOD2_LEGS, hipbackward, NOMOVE, FBSHIFT);
-			break;
-
-
-		case 2:
-			// now put the first set of legs back down on the ground
-			setLeg(TRIPOD1_LEGS, NOMOVE, kneedown, 0, 0, leanangle);
-			break;
-
-
-		case 3:
-			// lift up the other set of legs at the knee
-			setLeg(TRIPOD2_LEGS, NOMOVE, kneeup, 0, 0, leanangle);
-			break;
-
-
-		case 4:
-			// similar to phase 1, move raised legs forward and lowered legs backward
-			setLeg(TRIPOD1_LEGS, hipbackward, NOMOVE, FBSHIFT);
-			setLeg(TRIPOD2_LEGS, hipforward, NOMOVE, FBSHIFT);
-			break;
-
-
-		case 5:
-			// put the second set of legs down, and the cycle repeats
-			setLeg(TRIPOD2_LEGS, NOMOVE, kneedown, 0, 0, leanangle);
-			break;
-	}
-	commitServos(); // implement all leg motions
-}
-void setLeg(int legmask, int hip_pos, int knee_pos, int adj)
-{
-	setLeg(legmask, hip_pos, knee_pos, adj, 0, 0);  // use the non-raw version with leanangle=0
-}
-// version with leanangle = 0
-void setLeg(int legmask, int hip_pos, int knee_pos, int adj, int raw)
-{
-	setLeg(legmask, hip_pos, knee_pos, adj, raw, 0);
-}
-void setLeg(int legmask, int hip_pos, int knee_pos, int adj, int raw, int leanangle)
-{
-	for (int i = 0; i < NUM_LEGS; i++)
-	{
-		if (legmask & 0b1)    // if the lowest bit is ON
-		{
-			if (hip_pos != NOMOVE)
-			{
-				if (!raw)
-				{
-					setHip(i, hip_pos, adj);
-				}
-				else
-				{
-					setHipRaw(i, hip_pos);
-				}
-			}
-			if (knee_pos != NOMOVE)
-			{
-				int pos = knee_pos;
-				if (leanangle != 0)
-				{
-					switch (i)
-					{
-						case 0:
-						case 6:
-						case 5:
-						case 11:
-							if (leanangle < 0) pos -= leanangle;
-							break;
-						case 1:
-						case 7:
-						case 4:
-						case 10:
-							pos += abs(leanangle / 2);
-							break;
-						case 2:
-						case 8:
-						case 3:
-						case 9:
-							if (leanangle > 0) pos += leanangle;
-							break;
-					}
-					//Serial.print("Lean:"); Serial.print(leanangle); Serial.print("pos="); Serial.println(pos);
-				}
-
-
-				setKnee(i, pos);
-			}
-		}
-		legmask = (legmask >> 1); // shift down one bit position
-	}
-}
-void setHipRaw(int leg, int pos)
-{
-	setServo(leg, pos);
-	// this version of setHip does no processing at all (for example
-	// to distinguish left from right sides)
-}
-void setHip(int leg, int pos)
-{
-	// reverse the left side for consistent forward motion
-	if (leg >= LEFT_START)
-	{
-		pos = 180 - pos;
-	}
-	setHipRaw(leg, pos);
-	// this version of setHip adjusts for left and right legs so
-	// that 0 degrees moves "forward" i.e. toward legs 5-0 which is
-	// nominally the front of the robot
-
-
-}
-void setHip(int leg, int pos, int adj)
-{
-	if (ISFRONTLEG(leg))
-	{
-		pos -= adj;
-	}
-	else if (ISBACKLEG(leg))
-	{
-		pos += adj;
-	}
-	// reverse the left side for consistent forward motion
-	if (leg >= LEFT_START)
-	{
-		pos = 180 - pos;
-	}
-
-
-	setHipRaw(leg, pos);
-	// this version of setHip adjusts not only for left and right,
-	// but also shifts the front legs a little back and the back legs
-	// forward to make a better balance for certain gaits like tripod or quadruped
-}
-void setKnee(int leg, int pos)
-{
-	// find the knee associated with leg if this is not already a knee
-	if (leg < KNEE_OFFSET)
-	{
-		leg += KNEE_OFFSET;
-	}
-	setServo(leg, pos);
-}
-
-
-
-
 void setup()
 {
-//				CLK,CMD,ATT,DAT
-	ps2x.config_gamepad(8, 11, 10, 12, false, false);
+	ps2.begin(9600);
 	pinMode(LEDpin, OUTPUT);
 	pulseconstant = (1000000 / SERVOFREQ) / 4096;
 	pwm.begin();
@@ -613,26 +207,14 @@ void setup()
 	delay(1000);
 }
 
-
 void loop()
 {
 
+	//	Serial.println();
 
-	ps2x.read_gamepad();
-
-
-	PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
-	PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
-	PlyStnLStickUpDn = ps2x.Analog(PSS_LY);
-	PlyStnLStickLtRt = ps2x.Analog(PSS_LX);
-
-
-	Serial.println(PlyStnRStickUpDn);
-
-
-	if(ps2x.ButtonPressed(PSB_CROSS))
+	// Belly Flop
+	if(ps2.readButton(PS2_CROSS) == 0)
 	{
-		ps2x.read_gamepad();
 		servoWrite(0, 1500);
 		servoWrite(1, 1500);
 		servoWrite(2, 1500);
@@ -648,8 +230,7 @@ void loop()
 		delay(250);
 		while(true)
 		{
-			ps2x.read_gamepad();
-			if(ps2x.ButtonPressed(PSB_CROSS))
+			if(ps2.readButton(PS2_CROSS) == 0)
 			{
 				idleMode();
 				delay(250);
@@ -658,11 +239,10 @@ void loop()
 			delay(15);
 		}
 
-
 	}
 
-
-	if(ps2x.ButtonPressed(PSB_SQUARE))
+	// Speed Boost
+	if(ps2.readButton(PS2_SQUARE) == 0)
 	{
 		if(speed == 125)
 		{
@@ -674,8 +254,8 @@ void loop()
 		}
 	}
 
-
-	if(ps2x.ButtonPressed(PSB_TRIANGLE))
+	// Leg test
+	if(ps2.readButton(PS2_TRIANGLE) == 0)
 	{
 		servoWrite(6, 1925);
 		delay(fastver);
@@ -701,65 +281,43 @@ void loop()
 		delay(fastver);
 		servoWrite(11, 1075);
 	}
-
-
-	/**
-	if(PlyStnRStickUpDn == 0) //Forward
+	
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
 	{
-		while(PlyStnRStickUpDn == 0)
+		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
 		{
 			goForward();
-			ps2x.read_gamepad();
-			PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 		}
 		idleMode();
 	}
-	*/
 
-
-	if(PlyStnRStickUpDn == 0) //Forward
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_DOWN) == 100)
 	{
-		gait_tripod(1, (submode == SUBMODE_3) ? HIP_BACKWARD_SMALL : HIP_BACKWARD,
-		            (submode == SUBMODE_3) ? HIP_FORWARD_SMALL : HIP_FORWARD,
-		            KNEE_TRIPOD_UP + factor * KNEE_TRIPOD_ADJ, KNEE_DOWN,
-		            TRIPOD_CYCLE_TIME * factor);
-	}
-
-
-	if(PlyStnRStickUpDn == 255) //Backward
-	{
-		while(PlyStnRStickUpDn == 0)
+		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
 		{
 			goBackward();
-			ps2x.read_gamepad();
-			PlyStnRStickUpDn = ps2x.Analog(PSS_RY);
 		}
 		idleMode();
 	}
 
-
-	if(PlyStnRStickLtRt < 15) //Right
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
 	{
-		while(PlyStnRStickLtRt < 15)
+		while(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
 		{
 			turnLeft();
-			ps2x.read_gamepad();
-			PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 		}
 		idleMode();
 	}
 
-
-	if(PlyStnRStickLtRt == 255) //Left
+	if(ps2.readButton(PS2_JOYSTICK_RIGHT_RIGHT) == 100)
 	{
-		while(PlyStnRStickLtRt == 255)
+		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
 		{
 			turnRight();
-			ps2x.read_gamepad();
-			PlyStnRStickLtRt = ps2x.Analog(PSS_RX);
 		}
 		idleMode();
 	}
-	
+
 	delay(15);
+
 }
