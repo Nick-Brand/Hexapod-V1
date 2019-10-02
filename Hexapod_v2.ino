@@ -259,41 +259,78 @@ void loop()
 	{
 		servoWrite(6, 1925);
 		delay(fastver);
+		servoWrite(0, 1925);
+		delay(fastver);
+		servoWrite(0, 1075);
+		delay(fastver);
 		servoWrite(6, 1075);
+		delay(fastver);
+		servoWrite(0, 1500);
 		delay(fastver);
 		servoWrite(7, 1925);
 		delay(fastver);
+		servoWrite(1, 1925);
+		delay(fastver);
+		servoWrite(1, 1075);
+		delay(fastver);
 		servoWrite(7, 1075);
+		delay(fastver);
+		servoWrite(1, 1500);
 		delay(fastver);
 		servoWrite(8, 1925);
 		delay(fastver);
+		servoWrite(2, 1925);
+		delay(fastver);
+		servoWrite(2, 1075);
+		delay(fastver);
 		servoWrite(8, 1075);
+		delay(fastver);
+		servoWrite(2, 1500);
 		delay(fastver);
 		servoWrite(9, 1925);
 		delay(fastver);
+		servoWrite(3, 1925);
+		delay(fastver);
+		servoWrite(3, 1075);
+		delay(fastver);
 		servoWrite(9, 1075);
+		delay(fastver);
+		servoWrite(3, 1500);
 		delay(fastver);
 		servoWrite(10, 1925);
 		delay(fastver);
+		servoWrite(4, 1925);
+		delay(fastver);
+		servoWrite(4, 1075);
+		delay(fastver);
 		servoWrite(10, 1075);
+		delay(fastver);
+		servoWrite(4, 1500);
 		delay(fastver);
 		servoWrite(11, 1925);
 		delay(fastver);
+		servoWrite(5, 1925);
+		delay(fastver);
+		servoWrite(5, 1075);
+		delay(fastver);
 		servoWrite(11, 1075);
+		delay(fastver);
+		servoWrite(5, 1500);
+		delay(fastver);
 	}
 	
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
+	if(ps2.readButton(PS2_JOYSTICK_LEFT_UP) == 100)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
+		while(ps2.readButton(PS2_JOYSTICK_LEFT_UP) == 100)
 		{
 			goForward();
 		}
 		idleMode();
 	}
 
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_DOWN) == 100)
+	if(ps2.readButton(PS2_JOYSTICK_LEFT_DOWN) == 100)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
+		while(ps2.readButton(PS2_JOYSTICK_LEFT_DOWN) == 100)
 		{
 			goBackward();
 		}
