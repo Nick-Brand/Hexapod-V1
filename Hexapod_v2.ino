@@ -13,12 +13,15 @@
 const int LEDpin = 13;
 int fastver = 100;
 int speed = 125;
+//int current = 1;
+//int last = 1;
 
 Cytron_PS2Shield ps2(2, 3); // SoftwareSerial: Rx and Tx pin
 
 float SERVOFREQ = 50;
 float pulseconstant;
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
 
 void servoWrite(uint8_t n, float pulse)
 {
@@ -65,7 +68,7 @@ void turnRight()
 	delay(speed);
 
 	//Next
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_RIGHT) == 100)
+	if(ps2.readButton(PS2_RIGHT) == 0)
 	{
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
@@ -116,7 +119,7 @@ void turnLeft()
 
 	//Next
 
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
+	if(ps2.readButton(PS2_LEFT) == 0)
 	{
 		servoWrite(7, 1500);
 		servoWrite(9, 1500);
@@ -241,6 +244,22 @@ void loop()
 
 	}
 
+	// Debouncer
+	/**
+	if(ps2.readButton(PS2_SQUARE) == 0)
+	{
+		if(last == 1)
+		{
+			current = 2;
+		}
+		else
+		{
+			current = 1;
+		}
+		delay(5);
+	}
+	*/
+	
 	// Speed Boost
 	if(ps2.readButton(PS2_SQUARE) == 0)
 	{
@@ -252,8 +271,12 @@ void loop()
 		{
 			speed = 125;
 		}
+		
+		//last = current;
+		delay(5);
 	}
 
+	
 	// Leg test
 	if(ps2.readButton(PS2_TRIANGLE) == 0)
 	{
@@ -319,36 +342,36 @@ void loop()
 		delay(fastver);
 	}
 	
-	if(ps2.readButton(PS2_JOYSTICK_LEFT_UP) == 100)
+	if(ps2.readButton(PS2_UP) == 0)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_LEFT_UP) == 100)
+		while(ps2.readButton(PS2_UP) == 0)
 		{
 			goForward();
 		}
 		idleMode();
 	}
 
-	if(ps2.readButton(PS2_JOYSTICK_LEFT_DOWN) == 100)
+	if(ps2.readButton(PS2_DOWN) == 0)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_LEFT_DOWN) == 100)
+		while(ps2.readButton(PS2_DOWN) == 0)
 		{
 			goBackward();
 		}
 		idleMode();
 	}
 
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
+	if(ps2.readButton(PS2_LEFT) == 0)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_RIGHT_LEFT) == 100)
+		while(ps2.readButton(PS2_LEFT) == 0)
 		{
 			turnLeft();
 		}
 		idleMode();
 	}
 
-	if(ps2.readButton(PS2_JOYSTICK_RIGHT_RIGHT) == 100)
+	if(ps2.readButton(PS2_RIGHT) == 0)
 	{
-		while(ps2.readButton(PS2_JOYSTICK_RIGHT_UP) == 100)
+		while(ps2.readButton(PS2_RIGHT) == 0)
 		{
 			turnRight();
 		}
